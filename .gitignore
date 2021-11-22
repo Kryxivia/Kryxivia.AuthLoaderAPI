@@ -391,3 +391,5 @@ FodyWeavers.xsd
 appsettings.*
 local.settings.*
 
+# NuGet
+nuget.config
