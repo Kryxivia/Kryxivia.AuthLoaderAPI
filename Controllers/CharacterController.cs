@@ -103,7 +103,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         }
 
         /// <summary>
-        /// Returns characters list for the authenticated address
+        /// Returns a flag indicating if a character exists with the given name
         /// </summary>
         [HttpGet]
         [Route("names/{characterName}")]
