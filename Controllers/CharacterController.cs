@@ -4,11 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Kryxivia.Domain.MongoDB.Models.Game;
 using Kryxivia.Domain.MongoDB.Repositories;
-using Kryxivia.AuthLoaderAPI.Controllers.Requests;
 using Kryxivia.AuthLoaderAPI.Middlewares.Attributes;
 using Kryxivia.AuthLoaderAPI.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Kryxivia.AuthLoaderAPI.Abstractions.Requests;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
