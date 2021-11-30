@@ -106,7 +106,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// Returns a flag indicating if a character exists with the given name
         /// </summary>
         [HttpGet]
-        [Route("names/{characterName}")]
+        [Route("names/{name}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> CharacterNameExists(string name)
         {
