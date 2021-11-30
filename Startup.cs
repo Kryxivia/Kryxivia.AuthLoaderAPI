@@ -55,6 +55,9 @@ namespace Kryxivia.AuthLoaderAPI
             // Kryxivia MongoDB...
             services.AddKryxMongoDBWithRepositories(Configuration.GetConnectionString("KryxiviaDatabase"));
 
+            // Application Insights...
+            services.AddApplicationInsightsTelemetry();
+
             // Services...
             services.AddSingleton<LoginQueueService>();
 

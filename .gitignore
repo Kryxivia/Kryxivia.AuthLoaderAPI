@@ -393,3 +393,6 @@ local.settings.*
 
 # NuGet
 nuget.config
+
+# Deployments
+*.arm.json
