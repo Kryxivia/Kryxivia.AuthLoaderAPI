@@ -96,8 +96,11 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             if (characters?.Count == 0)
                 return NotFound();
 
-            // Removing InventoryItems from json result, we don't need it now
+            // Removing InventoryItems from json result
             characters.ForEach(x => x.InventoryItems = null);
+
+            // Removing Spelss from json result
+            characters.ForEach(x => x.Spells = null);
 
             return Ok(characters);
         }
