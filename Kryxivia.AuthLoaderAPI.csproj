@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Kryxivia.AuthLoaderAPI.Abstractions" Version="1.0.0" />
     <PackageReference Include="Kryxivia.Contracts" Version="1.0.1" />
     <PackageReference Include="Kryxivia.Domain" Version="1.2.0" />
     <PackageReference Include="Kryxivia.Shared" Version="1.0.7" />

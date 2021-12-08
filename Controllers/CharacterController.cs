@@ -8,7 +8,7 @@ using Kryxivia.AuthLoaderAPI.Middlewares.Attributes;
 using Kryxivia.AuthLoaderAPI.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Kryxivia.AuthLoaderAPI.Abstractions.Requests;
+using Kryxivia.AuthLoaderAPI.Controllers.Requests;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
@@ -33,6 +33,9 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         public async Task<IActionResult> CreateCharacter([FromBody] CreateCharacterReq req)
         {
             var senderPubKey = HttpContext.PublicKey();
+
+            var characterCount = await _characterRepository.GetAllActiveByPublicKey(senderPubKey);
+            if (characterCount?.Count >= Constants.MAX_CHARACTER_PER_ACCOUNT) return Error($"Characters count limited to {Constants.MAX_CHARACTER_PER_ACCOUNT} per account"); 
 
             var character = new Character()
             {

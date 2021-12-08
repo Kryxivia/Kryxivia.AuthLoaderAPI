@@ -7,7 +7,7 @@ namespace Kryxivia.AuthLoaderAPI
 {
     public static class Constants
     {
-        public const string NFT_EXTERNAL_URL_ADDR = "https://kryxivia.io/nft/{ObjectId}";
+        public const int MAX_CHARACTER_PER_ACCOUNT = 1;
 
         public const string MONGO_BLOCKCHAIN_STORAGE_TRANSFER_LOGS_DB_TAG = "TransferLogs";
 

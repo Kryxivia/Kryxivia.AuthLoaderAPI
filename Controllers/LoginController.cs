@@ -17,7 +17,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Kryxivia.Shared.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Kryxivia.AuthLoaderAPI.Abstractions.Requests;
+using Kryxivia.AuthLoaderAPI.Controllers.Requests;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
