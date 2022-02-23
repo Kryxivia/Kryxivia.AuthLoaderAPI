@@ -18,6 +18,8 @@ using System.Security.Claims;
 using Kryxivia.Shared.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Kryxivia.AuthLoaderAPI.Controllers.Requests;
+using Kryxivia.AuthLoaderAPI.Services.LoginQueue.Models;
+using System.Net.Mime;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
@@ -46,6 +48,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// Authenticate a user and add it to the login queue
         /// </summary>
         [HttpPost]
+        [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -100,7 +103,8 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// </summary>
         [HttpGet]
         [Route("{ticket}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult GetTicketPosition(string ticket)
         {

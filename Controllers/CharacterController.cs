@@ -9,6 +9,10 @@ using Kryxivia.AuthLoaderAPI.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Kryxivia.AuthLoaderAPI.Controllers.Requests;
+using System.Net.Mime;
+using MongoDB.Bson;
+using Kryxivia.Domain.MongoDB.Enums;
+using Newtonsoft.Json;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
@@ -17,32 +21,57 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
     [Route("api/v1/characters")]
     public class CharacterController : _ControllerBase
     {
+        private readonly AccountRepository _accountRepository;
         private readonly CharacterRepository _characterRepository;
+        private readonly GameParametersRepository _gameParametersRepository;
 
-        public CharacterController(CharacterRepository characterRepository)
+        public CharacterController(AccountRepository accountRepository, CharacterRepository characterRepository, GameParametersRepository gameParametersRepository)
         {
+            _accountRepository = accountRepository;
             _characterRepository = characterRepository;
+            _gameParametersRepository = gameParametersRepository;
         }
 
         /// <summary>
         /// Create a character for the authenticated address
         /// </summary>
         [HttpPut]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateCharacter([FromBody] CreateCharacterReq req)
         {
             var senderPubKey = HttpContext.PublicKey();
 
-            var characterCount = await _characterRepository.GetAllActiveByPublicKey(senderPubKey);
-            if (characterCount?.Count >= Constants.MAX_CHARACTER_PER_ACCOUNT) return Error($"Characters count limited to {Constants.MAX_CHARACTER_PER_ACCOUNT} per account"); 
+            var account = await _accountRepository.GetByPublicKey(senderPubKey);
+            if (account != null && !account.IsAdmin)
+            {
+                var characterCount = await _characterRepository.GetAllActiveByPublicKey(senderPubKey);
+                if (characterCount?.Count >= Constants.MAX_CHARACTER_PER_ACCOUNT) return Error($"Characters count limited to {Constants.MAX_CHARACTER_PER_ACCOUNT} per account");
+            }
 
             var character = new Character()
             {
                 PublicKey = senderPubKey,
                 Name = req.Name,
                 Gender = req.Gender,
+                HairColor = req.HairColor,
+                HairStyle = req.HairStyle,
+                SkinColor = req.SkinColor,
+                EyesColor = req.EyesColor,
+                Blendshapes = req.Blendshapes
             };
+
+            if (req.WelcomeStuff)
+            {
+                var welcomeInventoryStuff = await _gameParametersRepository.GetByName<List<PositionedItem>>("WelcomeInventoryStuff");
+                if (welcomeInventoryStuff != null && welcomeInventoryStuff.Count > 0)
+                    character.InventoryItems.AddRange(welcomeInventoryStuff);
+
+                var welcomeEquippedStuff = await _gameParametersRepository.GetByName<List<EquipmentItem>>("WelcomeEquippedStuff");
+                if (welcomeEquippedStuff != null && welcomeEquippedStuff.Count > 0)
+                    character.EquippedItems.AddRange(welcomeEquippedStuff);
+            }
 
             var characterId = await _characterRepository.Create(character);
             if (!string.IsNullOrWhiteSpace(characterId))
@@ -56,6 +85,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// </summary>
         [HttpDelete]
         [Route("{characterId}")]
+        [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -88,7 +118,8 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// Returns characters list for the authenticated address
         /// </summary>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<Character>))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetCharactersList()
         {
@@ -113,6 +144,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// </summary>
         [HttpGet]
         [Route("names/{name}")]
+        [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> CharacterNameExists(string name)
         {

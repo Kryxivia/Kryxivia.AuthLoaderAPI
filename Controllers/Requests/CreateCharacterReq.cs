@@ -10,6 +10,13 @@ namespace Kryxivia.AuthLoaderAPI.Controllers.Requests
         public string Name { get; set; }
         public int Gender { get; set; }
 
-        // TODO: Options....
+        public int HairColor { get; set; }
+        public int HairStyle { get; set; }
+        public int SkinColor { get; set; }
+        public int EyesColor { get; set; }
+
+        public List<KeyValuePair<string, float>> Blendshapes { get; set; } = new List<KeyValuePair<string, float>>();
+
+        public bool WelcomeStuff { get; set; } = true;
     }
 }
