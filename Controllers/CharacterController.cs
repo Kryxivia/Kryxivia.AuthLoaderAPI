@@ -50,6 +50,9 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 if (characterCount?.Count >= Constants.MAX_CHARACTER_PER_ACCOUNT) return Error($"Characters count limited to {Constants.MAX_CHARACTER_PER_ACCOUNT} per account");
             }
 
+            var isNameAvailable = await IsNameAvailable(req.Name);
+            if (!isNameAvailable) return Error("This character name is already used");
+
             var character = new Character()
             {
                 PublicKey = senderPubKey,
@@ -148,8 +151,13 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> CharacterNameExists(string name)
         {
+            return Ok(new { Exists = !(await IsNameAvailable(name)) });
+        }
+
+        private async Task<bool> IsNameAvailable(string name)
+        {
             var characters = await _characterRepository.GetAllByName(name);
-            return Ok(new { Exists = characters?.Count >= 1 });
+            return characters == null || characters?.Count == 0;
         }
     }
 }
