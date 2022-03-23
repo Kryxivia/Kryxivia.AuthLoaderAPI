@@ -110,7 +110,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         {
             var loginStatus = _loginQueueService.GetLoginStatus(ticket);
             if (loginStatus != null) return Ok(loginStatus);
-            else return NotFound(ErrorRes.Get("Unable to find this ticket"));
+            else return NotFound(ErrorRes.Get("No ticket found"));
         }
     }
 }
