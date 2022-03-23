@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Authorization;
 using Kryxivia.AuthLoaderAPI.Controllers.Requests;
 using Kryxivia.AuthLoaderAPI.Services.LoginQueue.Models;
 using System.Net.Mime;
+using Kryxivia.AuthLoaderAPI.Controllers.Responses;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
@@ -49,19 +50,18 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// </summary>
         [HttpPost]
         [Produces(MediaTypeNames.Application.Json)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginRes))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorRes))]
         public IActionResult Login([FromBody] LoginReq req)
         {
             var addressRec = _ethereumMessageSigner.EncodeUTF8AndEcRecover(_jwtSettings.SignatureMessage, req.Signature);
             if (addressRec != req.PublicKey)
-                return Unauthorized("Invalid signature");
+                return Error(ErrorRes.Get("Invalid signature"));
 
             if (_loginQueueService.IsInQueue(addressRec))
-                return Unauthorized("Already in queue");
+                return Error(ErrorRes.Get("Already in queue"));
 
-            var loginRequest = new Services.LoginQueue.Models.LoginRequest()
+            var loginRequest = new LoginRequest()
             {
                 Id = addressRec,
                 PublicKey = addressRec,
@@ -70,7 +70,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             var ticket = _loginQueueService.PushLogin(loginRequest);
             if (string.IsNullOrWhiteSpace(ticket))
-                return Error("Ticket is empty");
+                return Error(ErrorRes.Get("Ticket is empty"));
 
             // Generating Jwt
             var expDate = DateTime.Now.AddMinutes(_jwtSettings.ExpirationInMinutes);
@@ -95,7 +95,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var jwt = jwtHandler.CreateToken(jwtDescriptor);
             var jwtAsString = jwtHandler.WriteToken(jwt);
 
-            return Ok(new { Token = jwtAsString, Ticket = ticket });
+            return Ok(new LoginRes() { Token = jwtAsString, Ticket = ticket });
         }
 
         /// <summary>
@@ -105,12 +105,12 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [Route("{ticket}")]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
         public IActionResult GetTicketPosition(string ticket)
         {
             var loginStatus = _loginQueueService.GetLoginStatus(ticket);
             if (loginStatus != null) return Ok(loginStatus);
-            else return NotFound("Unable to find this ticket");
+            else return NotFound(ErrorRes.Get("Unable to find this ticket"));
         }
     }
 }

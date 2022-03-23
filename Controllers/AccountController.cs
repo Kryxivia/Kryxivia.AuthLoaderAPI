@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mime;
 using System.Threading.Tasks;
+using Kryxivia.AuthLoaderAPI.Controllers.Responses;
 using Kryxivia.AuthLoaderAPI.Middlewares.Attributes;
 using Kryxivia.AuthLoaderAPI.Utilities;
 using Kryxivia.Domain.MongoDB.Models.Game;
@@ -30,14 +31,14 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [HttpGet]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Account))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
         public async Task<IActionResult> GetAccountByAuthenticatedPublicKey()
         {
             var senderPubKey = HttpContext.PublicKey();
             var account = await _accountRepository.GetByPublicKey(senderPubKey);
 
             if (account == null)
-                return NotFound();
+                return NotFound(ErrorRes.Get("No account found"));
 
             // Removing signature from response...
             account.Signature = null;

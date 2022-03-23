@@ -13,6 +13,7 @@ using System.Net.Mime;
 using MongoDB.Bson;
 using Kryxivia.Domain.MongoDB.Enums;
 using Newtonsoft.Json;
+using Kryxivia.AuthLoaderAPI.Controllers.Responses;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
@@ -37,8 +38,8 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// </summary>
         [HttpPut]
         [Produces(MediaTypeNames.Application.Json)]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CreateCharacterRes))]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorRes))]
         public async Task<IActionResult> CreateCharacter([FromBody] CreateCharacterReq req)
         {
             var senderPubKey = HttpContext.PublicKey();
@@ -47,11 +48,12 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             if (account != null && !account.IsAdmin)
             {
                 var characterCount = await _characterRepository.GetAllActiveByPublicKey(senderPubKey);
-                if (characterCount?.Count >= Constants.MAX_CHARACTER_PER_ACCOUNT) return Error($"Characters count limited to {Constants.MAX_CHARACTER_PER_ACCOUNT} per account");
+                if (characterCount?.Count >= Constants.MAX_CHARACTER_PER_ACCOUNT)
+                    return Error(ErrorRes.Get($"Characters count limited to {Constants.MAX_CHARACTER_PER_ACCOUNT} per account"));
             }
 
             var isNameAvailable = await IsNameAvailable(req.Name);
-            if (!isNameAvailable) return Error("This character name is already used");
+            if (!isNameAvailable) return Error(ErrorRes.Get("This character name is already used"));
 
             var character = new Character()
             {
@@ -78,9 +80,9 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             var characterId = await _characterRepository.Create(character);
             if (!string.IsNullOrWhiteSpace(characterId))
-                return Ok(characterId);
+                return Ok(new CreateCharacterRes() { CharacterId = characterId });
             else
-                return Error();
+                return Error(ErrorRes.Get("Error creating character"));
         }
 
         /// <summary>
@@ -90,8 +92,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [Route("{characterId}")]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorRes))]
         public async Task<IActionResult> ArchiveCharacter(string characterId)
         {
             var senderPubKey = HttpContext.PublicKey();
@@ -108,12 +109,12 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 }
                 else
                 {
-                    return Error();
+                    return Error(ErrorRes.Get("Error updating character"));
                 }
             }
             else
             {
-                return Forbid();
+                return Error(ErrorRes.Get("Unauthorized sender"));
             }
         }
 
@@ -123,7 +124,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [HttpGet]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<Character>))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
         public async Task<IActionResult> GetCharactersList()
         {
             var senderPubKey = HttpContext.PublicKey();
@@ -131,7 +132,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var characters = await _characterRepository.GetAllActiveByPublicKey(senderPubKey);
 
             if (characters?.Count == 0)
-                return NotFound();
+                return NotFound(ErrorRes.Get("No character found"));
 
             // Removing InventoryItems from json result
             characters.ForEach(x => x.InventoryItems = null);
@@ -148,16 +149,39 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [HttpGet]
         [Route("names/{name}")]
         [Produces(MediaTypeNames.Application.Json)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(CharacterNameExistsRes))]
         public async Task<IActionResult> CharacterNameExists(string name)
         {
-            return Ok(new { Exists = !(await IsNameAvailable(name)) });
+            return Ok(new CharacterNameExistsRes() { Exists = !(await IsNameAvailable(name)) });
         }
+
+        /// <summary>
+        /// Returns a flag indicating if a character is owned by the authenticated address
+        /// </summary>
+        [HttpGet]
+        [Route("ownership/{characterId}")]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IsOwnerOfRes))]
+        public async Task<IActionResult> IsOwnerOf(string characterId)
+        {
+            bool isOwner = false;
+
+            var senderPubKey = HttpContext.PublicKey();
+
+            var character = await _characterRepository.GetActive(characterId);
+            if (character != null && character.PublicKey == senderPubKey) isOwner = true;
+
+            return Ok(new IsOwnerOfRes() { Owner = isOwner });
+        }
+
+        #region Utilities
 
         private async Task<bool> IsNameAvailable(string name)
         {
             var characters = await _characterRepository.GetAllByName(name);
             return characters == null || characters?.Count == 0;
         }
+
+        #endregion
     }
 }
