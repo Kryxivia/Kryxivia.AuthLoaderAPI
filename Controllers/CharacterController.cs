@@ -69,13 +69,27 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             if (req.WelcomeStuff)
             {
+                var now = DateTime.Now;
+
                 var welcomeInventoryStuff = await _gameParametersRepository.GetByName<List<PositionedItem>>("WelcomeInventoryStuff");
-                if (welcomeInventoryStuff != null && welcomeInventoryStuff.Count > 0)
-                    character.InventoryItems.AddRange(welcomeInventoryStuff);
+                welcomeInventoryStuff.ForEach(x =>
+                {
+                    x.Item.Id = ObjectId.GenerateNewId();
+                    x.Item.CreatedAt = now;
+                    x.Item.UpdatedAt = now;
+
+                    character.InventoryItems.Add(x);
+                });
 
                 var welcomeEquippedStuff = await _gameParametersRepository.GetByName<List<EquipmentItem>>("WelcomeEquippedStuff");
-                if (welcomeEquippedStuff != null && welcomeEquippedStuff.Count > 0)
-                    character.EquippedItems.AddRange(welcomeEquippedStuff);
+                welcomeEquippedStuff.ForEach(x =>
+                {
+                    x.Id = ObjectId.GenerateNewId();
+                    x.CreatedAt = now;
+                    x.UpdatedAt = now;
+
+                    character.EquippedItems.Add(x);
+                });
             }
 
             var characterId = await _characterRepository.Create(character);
@@ -124,15 +138,11 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [HttpGet]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<Character>))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
         public async Task<IActionResult> GetCharactersList()
         {
             var senderPubKey = HttpContext.PublicKey();
 
-            var characters = await _characterRepository.GetAllActiveByPublicKey(senderPubKey);
-
-            if (characters?.Count == 0)
-                return NotFound(ErrorRes.Get("No character found"));
+            var characters = await _characterRepository.GetAllActiveByPublicKey(senderPubKey) ?? new List<Character>();
 
             // Removing InventoryItems from json result
             characters.ForEach(x => x.InventoryItems = null);
