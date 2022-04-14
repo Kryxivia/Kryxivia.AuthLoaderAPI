@@ -31,14 +31,19 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
     {
         private readonly JwtSettings _jwtSettings;
 
+        private readonly AlphaAccessRepository _alphaAccessRepository;
+
         private readonly LoginQueueService _loginQueueService;
 
         private readonly EthereumMessageSigner _ethereumMessageSigner;
 
         public LoginController(IOptions<JwtSettings> jwtSettings,
-            LoginQueueService loginQueueService)
+            AlphaAccessRepository alphaAccessRepository,
+                LoginQueueService loginQueueService)
         {
             _jwtSettings = jwtSettings?.Value;
+
+            _alphaAccessRepository = alphaAccessRepository;
 
             _loginQueueService = loginQueueService;
 
@@ -52,7 +57,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginRes))]
         [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorRes))]
-        public IActionResult Login([FromBody] LoginReq req)
+        public async Task<IActionResult> Login([FromBody] LoginReq req)
         {
             var addressRec = _ethereumMessageSigner.EncodeUTF8AndEcRecover(_jwtSettings.SignatureMessage, req.Signature);
             if (addressRec != req.PublicKey)
@@ -60,6 +65,10 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             if (_loginQueueService.IsInQueue(addressRec))
                 return Error(ErrorRes.Get("Already in queue"));
+
+            var alphaAccessEntry = await _alphaAccessRepository.GetByPublicKey(req.PublicKey);
+            if (alphaAccessEntry == null)
+                return Error(ErrorRes.Get("No Alpha access found"));
 
             var loginRequest = new LoginRequest()
             {

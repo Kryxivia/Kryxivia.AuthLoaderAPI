@@ -26,6 +26,7 @@ using Kryxivia.AuthLoaderAPI.HealthChecks;
 using Kryxivia.AuthLoaderAPI.Services.LoginQueue;
 using Kryxivia.AuthLoaderAPI.Utilities;
 using Kryxivia.Domain.MongoDB.Bootstrapper;
+using Kryxivia.WebAppAPI.Filters;
 
 namespace Kryxivia.AuthLoaderAPI
 {
@@ -69,6 +70,15 @@ namespace Kryxivia.AuthLoaderAPI
             services.AddSwaggerGen(s =>
             {
                 s.SwaggerDoc("v1", new OpenApiInfo() { Title = "Kryxivia.AuthLoaderAPI", Version = "v1" });
+                s.OperationFilter<AuthorizeCheckOperationFilter>();
+                s.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header. \r\n\r\n Enter your token in the text input below.\r\n\r\nExample: \" 12345abcdef\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
 
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -89,16 +99,11 @@ namespace Kryxivia.AuthLoaderAPI
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, BootstrapperService bootstrapperService)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-            }
-
-            if (EnvironmentUtils.BootstrapMongoDB())
-            {
-                bootstrapperService.CreateIndexes();
             }
 
             // Serilog...
