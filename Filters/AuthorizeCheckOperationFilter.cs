@@ -9,7 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Kryxivia.WebAppAPI.Filters
+namespace Kryxivia.AuthLoaderAPI.Filters
 {
     internal class AuthorizeCheckOperationFilter : IOperationFilter
     {

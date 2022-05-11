@@ -184,6 +184,35 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             return Ok(new IsOwnerOfRes() { Owner = isOwner });
         }
 
+        /// <summary>
+        /// Returns a flag indicating if a character is owned by the authenticated address
+        /// </summary>
+        [HttpGet]
+        [Route("ownership/{characterId}/login")]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IsOwnerOfResThenLogin))]
+        public async Task<IActionResult> IsOwnerOfThenLogin(string characterId)
+        {
+            bool isOwner = false;
+            bool success = false;
+
+            var senderPubKey = HttpContext.PublicKey();
+
+            var character = await _characterRepository.GetActive(characterId);
+            if (character != null && character.PublicKey == senderPubKey)
+            {
+                isOwner = true;
+
+                if (!character.IsLogged)
+                {
+                    character.IsLogged = true;
+                    if (await _characterRepository.Update(character.IdAsString, character)) success = true;
+                }
+            }
+
+            return Ok(new IsOwnerOfResThenLogin() { Owner = isOwner, Success = success });
+        }
+
         #region Utilities
 
         private async Task<bool> IsNameAvailable(string name)

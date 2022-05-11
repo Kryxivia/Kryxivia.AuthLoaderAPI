@@ -82,14 +82,12 @@ namespace Kryxivia.AuthLoaderAPI.Services.LoginQueue
                                         {
                                             PublicKey = loginRequest.PublicKey,
                                             Signature = loginRequest.Signature,
-                                            IsLogged = true
                                         };
 
                                         await accountRepository.Create(account);
                                     }
                                     else
                                     {
-                                        account.IsLogged = true;
                                         await accountRepository.Update(account.IdAsString, account);
                                     }
 

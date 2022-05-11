@@ -25,8 +25,7 @@ using Kryxivia.AuthLoaderAPI.Middlewares.Attributes;
 using Kryxivia.AuthLoaderAPI.HealthChecks;
 using Kryxivia.AuthLoaderAPI.Services.LoginQueue;
 using Kryxivia.AuthLoaderAPI.Utilities;
-using Kryxivia.Domain.MongoDB.Bootstrapper;
-using Kryxivia.WebAppAPI.Filters;
+using Kryxivia.AuthLoaderAPI.Filters;
 
 namespace Kryxivia.AuthLoaderAPI
 {

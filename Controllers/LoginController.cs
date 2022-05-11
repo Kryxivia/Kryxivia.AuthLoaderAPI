@@ -32,18 +32,20 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         private readonly JwtSettings _jwtSettings;
 
         private readonly AlphaAccessRepository _alphaAccessRepository;
+        private readonly AccountRepository _accountRepository;
 
         private readonly LoginQueueService _loginQueueService;
 
         private readonly EthereumMessageSigner _ethereumMessageSigner;
 
         public LoginController(IOptions<JwtSettings> jwtSettings,
-            AlphaAccessRepository alphaAccessRepository,
+            AlphaAccessRepository alphaAccessRepository, AccountRepository accountRepository,
                 LoginQueueService loginQueueService)
         {
             _jwtSettings = jwtSettings?.Value;
 
             _alphaAccessRepository = alphaAccessRepository;
+            _accountRepository = accountRepository;
 
             _loginQueueService = loginQueueService;
 
@@ -70,6 +72,20 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             if (alphaAccessEntry == null)
                 return Error(ErrorRes.Get("No Alpha access found"));
 
+            // Creating an account if not existing...
+            var account = await _accountRepository.GetByPublicKey(req.PublicKey);
+            if (account == null)
+            {
+                account = new Account()
+                {
+                    PublicKey = req.PublicKey,
+                    Signature = req.Signature,
+                };
+
+                if (string.IsNullOrEmpty(await _accountRepository.Create(account))) return Error(ErrorRes.Get("Error creating account"));
+            }
+
+            // Requesting login...
             var loginRequest = new LoginRequest()
             {
                 Id = addressRec,
@@ -83,6 +99,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             // Generating Jwt
             var expDate = DateTime.Now.AddMinutes(_jwtSettings.ExpirationInMinutes);
+
             var issuer = _jwtSettings.Issuer;
             var audience = _jwtSettings.Audience;
             var signingCredentials = _jwtSettings.SigningCredentials;
