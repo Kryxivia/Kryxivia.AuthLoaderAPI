@@ -58,6 +58,23 @@ namespace Kryxivia.AuthLoaderAPI
             // Application Insights...
             services.AddApplicationInsightsTelemetry();
 
+            // Kryxivia Contracts...
+            var web3Settings = web3Section.Get<Web3Settings>();
+            services.AddKryxContracts(options =>
+            {
+                if (!string.IsNullOrWhiteSpace(web3Settings.Testnet?.NftContractAddr))
+                {
+                    options.TestnetWeb3 = web3Settings.TestnetWeb3();
+                    options.TestnetNftContractAddress = web3Settings.Testnet.NftContractAddr;
+                }
+
+                if (!string.IsNullOrWhiteSpace(web3Settings.Mainnet?.NftContractAddr))
+                {
+                    options.MainnetWeb3 = web3Settings.MainnetWeb3();
+                    options.MainnetNftContractAddress = web3Settings.Mainnet.NftContractAddr;
+                }
+            });
+
             // Services...
             services.AddSingleton<LoginQueueService>();
 

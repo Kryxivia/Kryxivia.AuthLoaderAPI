@@ -147,8 +147,11 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             // Removing InventoryItems from json result
             characters.ForEach(x => x.InventoryItems = null);
 
-            // Removing Spelss from json result
+            // Removing Spells from json result
             characters.ForEach(x => x.Spells = null);
+
+            // Removing ServerIp and ServerPort from json result
+            characters.ForEach(x => { x.ServerIp = null; x.ServerPort = -1; });
 
             return Ok(characters);
         }
