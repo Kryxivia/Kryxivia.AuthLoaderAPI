@@ -9,5 +9,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers.Requests
     {
         public string PublicKey { get; set; }
         public string Signature { get; set; }
+
+        public string TemporaryAuthToken { get; set; }
     }
 }

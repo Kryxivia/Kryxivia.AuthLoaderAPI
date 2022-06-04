@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Kryxivia.Domain.MongoDB.Models.Game;
 using Kryxivia.Domain.MongoDB.Repositories;
-using Kryxivia.AuthLoaderAPI.Middlewares.Attributes;
-using Kryxivia.AuthLoaderAPI.Utilities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Nethereum.Signer;
@@ -21,6 +17,9 @@ using Kryxivia.AuthLoaderAPI.Controllers.Requests;
 using Kryxivia.AuthLoaderAPI.Services.LoginQueue.Models;
 using System.Net.Mime;
 using Kryxivia.AuthLoaderAPI.Controllers.Responses;
+using Kryxivia.AuthLoaderAPI.Services.TemporaryToken;
+using Kryxivia.AuthLoaderAPI.Services.TemporaryToken.Models;
+using Newtonsoft.Json;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
@@ -36,11 +35,13 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
         private readonly LoginQueueService _loginQueueService;
 
+        private readonly TemporaryTokenService _temporaryTokenService;
+
         private readonly EthereumMessageSigner _ethereumMessageSigner;
 
         public LoginController(IOptions<JwtSettings> jwtSettings,
             AlphaAccessRepository alphaAccessRepository, AccountRepository accountRepository,
-                LoginQueueService loginQueueService)
+                LoginQueueService loginQueueService, TemporaryTokenService temporaryTokenService)
         {
             _jwtSettings = jwtSettings?.Value;
 
@@ -48,6 +49,8 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             _accountRepository = accountRepository;
 
             _loginQueueService = loginQueueService;
+
+            _temporaryTokenService = temporaryTokenService;
 
             _ethereumMessageSigner = new EthereumMessageSigner();
         }
@@ -121,6 +124,9 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var jwt = jwtHandler.CreateToken(jwtDescriptor);
             var jwtAsString = jwtHandler.WriteToken(jwt);
 
+            if (req.TemporaryAuthToken != null)
+                _temporaryTokenService.ValidateTemporaryAuthToken(req.TemporaryAuthToken, jwtAsString);
+
             return Ok(new LoginRes() { Token = jwtAsString, Ticket = ticket });
         }
 
@@ -137,6 +143,34 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var loginStatus = _loginQueueService.GetLoginStatus(ticket);
             if (loginStatus != null) return Ok(loginStatus);
             else return NotFound(ErrorRes.Get("No ticket found"));
+        }
+
+        /// <summary>
+        /// Generate a random temporary token attached to an uplauncher session
+        /// </summary>
+        [HttpGet]
+        [Route("token_auth")]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TemporaryAuthToken))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
+        public IActionResult GetTemporaryToken()
+        {
+            TemporaryAuthToken tmpToken = _temporaryTokenService.GenerateTemporaryAuthToken();
+            return Ok(tmpToken);
+        }
+
+        /// <summary>
+        /// Generate a random temporary token attached to an uplauncher session
+        /// </summary>
+        [HttpPost]
+        [Route("token_auth_check")]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TemporaryAuthToken))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
+        public IActionResult CheckTemporaryToken(TemporaryAuthToken req)
+        {
+            TemporaryAuthToken tmpToken = _temporaryTokenService.VerifyTemporaryAuthToken(req.TokenHash);
+            return Ok(tmpToken);
         }
     }
 }
