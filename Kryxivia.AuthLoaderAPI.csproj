@@ -10,8 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="Kryxivia.Contracts" Version="1.0.3" />
-    <PackageReference Include="Kryxivia.Domain" Version="2.2.9" />
-    <PackageReference Include="Kryxivia.Shared" Version="1.1.3" />
+    <PackageReference Include="Kryxivia.Domain" Version="2.3.8" />
+    <PackageReference Include="Kryxivia.Shared" Version="1.1.4" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.20.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="6.14.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9" />

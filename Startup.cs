@@ -26,6 +26,7 @@ using Kryxivia.AuthLoaderAPI.HealthChecks;
 using Kryxivia.AuthLoaderAPI.Services.LoginQueue;
 using Kryxivia.AuthLoaderAPI.Utilities;
 using Kryxivia.AuthLoaderAPI.Filters;
+using Kryxivia.AuthLoaderAPI.Services.TemporaryToken;
 
 namespace Kryxivia.AuthLoaderAPI
 {
@@ -45,8 +46,8 @@ namespace Kryxivia.AuthLoaderAPI
         public void ConfigureServices(IServiceCollection services)
         {
             // Configuration...
-            var web3Section = Configuration.GetSection("Web3");
-            services.Configure<Web3Settings>(web3Section);
+/*            var web3Section = Configuration.GetSection("Web3");
+            services.Configure<Web3Settings>(web3Section);*/
 
             services.Configure<JwtSettings>(Configuration.GetSection("Jwt"));
             services.Configure<SwaggerSettings>(Configuration.GetSection("Swagger"));
@@ -59,7 +60,7 @@ namespace Kryxivia.AuthLoaderAPI
             services.AddApplicationInsightsTelemetry();
 
             // Kryxivia Contracts...
-            var web3Settings = web3Section.Get<Web3Settings>();
+   /*         var web3Settings = web3Section.Get<Web3Settings>();
             services.AddKryxContracts(options =>
             {
                 if (!string.IsNullOrWhiteSpace(web3Settings.Testnet?.NftContractAddr))
@@ -73,10 +74,11 @@ namespace Kryxivia.AuthLoaderAPI
                     options.MainnetWeb3 = web3Settings.MainnetWeb3();
                     options.MainnetNftContractAddress = web3Settings.Mainnet.NftContractAddr;
                 }
-            });
+            });*/
 
             // Services...
             services.AddSingleton<LoginQueueService>();
+            services.AddSingleton<TemporaryTokenService>();
 
             // Health Checks...
             services.AddHealthChecks()
