@@ -11,8 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 using Kryxivia.AuthLoaderAPI.Controllers.Requests;
 using System.Net.Mime;
 using MongoDB.Bson;
-using Kryxivia.Domain.MongoDB.Enums;
-using Newtonsoft.Json;
 using Kryxivia.AuthLoaderAPI.Controllers.Responses;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
@@ -147,7 +145,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             // Removing InventoryItems from json result
             characters.ForEach(x => x.InventoryItems = null);
 
-            // Removing Spelss from json result
+            // Removing Spells from json result
             characters.ForEach(x => x.Spells = null);
 
             // Removing ServerIp and ServerPort from json result
@@ -216,51 +214,14 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                     if (await _characterRepository.Update(character.IdAsString, character)) success = true;
                 }
 
-                if (account.BanPeriod != null && account.BanPeriod > DateTime.Now)
+                if (account.BanPeriod.HasValue && account.BanPeriod > DateTime.Now)
                 {
                     isBanned = true;
-                    banPeriod = account.BanPeriod;
+                    banPeriod = account.BanPeriod.Value;
                 }
             }
 
             return Ok(new IsOwnerOfResThenLogin() { Owner = isOwner, Success = success, IsBanned = isBanned, BanPeriod = banPeriod });
-        }
-
-
-        /// <summary>
-        /// Update ban period for a player
-        /// </summary>
-        [HttpPut]
-        [Route("ban/")]
-        [Produces(MediaTypeNames.Application.Json)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorRes))]
-        public async Task<IActionResult> UpdateBanPeriod([FromBody] BanPeriodReq req)
-        {
-            var senderPubKey = HttpContext.PublicKey();
-            Account account = await _accountRepository.GetByPublicKey(senderPubKey);
-
-            if (account != null && !account.IsAdmin)
-                return Error(ErrorRes.Get("You do not have the rights to ban a player"));
-
-            Character targetCharacter = await _characterRepository.GetActive(req.CharacterId);
-            if (targetCharacter != null && !String.IsNullOrEmpty(targetCharacter.PublicKey))
-            {
-                Account targetAccount = await _accountRepository.GetByPublicKey(targetCharacter.PublicKey);
-
-                if (targetAccount != null)
-                {
-                    targetAccount.BanPeriod = req.BanPeriod;
-                    bool updateOk = await _accountRepository.Update(targetCharacter.PublicKey, targetAccount);
-
-                    if (updateOk)
-                        return Ok();
-                    else
-                        return Error(ErrorRes.Get("Error updating account"));
-                }
-            }
-
-            return Error(ErrorRes.Get("Error updating BanPeriod"));
         }
 
         #region Utilities
