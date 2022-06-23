@@ -197,7 +197,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             bool isOwner = false;
             bool success = false;
             bool isBanned = false;
-            DateTime banPeriod = new DateTime();
+            string banPeriod = "";
 
             var senderPubKey = HttpContext.PublicKey();
 
@@ -217,7 +217,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 if (account.BanPeriod.HasValue && account.BanPeriod > DateTime.Now)
                 {
                     isBanned = true;
-                    banPeriod = account.BanPeriod.Value;
+                    banPeriod = account.BanPeriod?.ToString("MM/dd/yyyy HH:mm");
                 }
             }
 
