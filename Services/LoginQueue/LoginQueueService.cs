@@ -88,7 +88,7 @@ namespace Kryxivia.AuthLoaderAPI.Services.LoginQueue
                                     }
                                     else
                                     {
-                                        await accountRepository.Update(account.IdAsString, account);
+                                        //TODO: Set last login date instead of an empty update...
                                     }
 
                                     Log.Information($"[Login] Account '{account.Id}' logged");

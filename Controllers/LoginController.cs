@@ -20,6 +20,9 @@ using Kryxivia.AuthLoaderAPI.Controllers.Responses;
 using Kryxivia.AuthLoaderAPI.Services.TemporaryToken;
 using Kryxivia.AuthLoaderAPI.Services.TemporaryToken.Models;
 using Newtonsoft.Json;
+using Kryxivia.AuthLoaderAPI.Middlewares.Attributes;
+using Kryxivia.AuthLoaderAPI.Utilities;
+using Kryxivia.AuthLoaderAPI.Services.LoginQueue.Models;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
@@ -39,9 +42,12 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
         private readonly EthereumMessageSigner _ethereumMessageSigner;
 
+        private readonly PlayerStateService _playerStateService;
+
         public LoginController(IOptions<JwtSettings> jwtSettings,
             AlphaAccessRepository alphaAccessRepository, AccountRepository accountRepository,
-                LoginQueueService loginQueueService, TemporaryTokenService temporaryTokenService)
+                LoginQueueService loginQueueService, TemporaryTokenService temporaryTokenService,
+                PlayerStateService playerStateService)
         {
             _jwtSettings = jwtSettings?.Value;
 
@@ -53,6 +59,8 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             _temporaryTokenService = temporaryTokenService;
 
             _ethereumMessageSigner = new EthereumMessageSigner();
+
+            _playerStateService = playerStateService;
         }
 
         /// <summary>
@@ -131,17 +139,89 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        [HttpGet]
+        [Route("ping")]
+        [JwtAuthorize]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
+        public IActionResult PingAliveness()
+        {
+            var senderPubKey = HttpContext.PublicKey();
+            _playerStateService.UpdateAlivePlayer(senderPubKey);
+            return Ok(new { result = true, date = DateTime.UtcNow });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [HttpGet]
+        [Route("join_queue")]
+        [JwtAuthorize]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
+        public IActionResult JoinQueue()
+        {
+            var senderPubKey = HttpContext.PublicKey();
+            // Requesting joining queue...
+            var loginRequest = new LoginRequest()
+            {
+                Id = senderPubKey,
+                PublicKey = senderPubKey,
+                Signature = string.Empty
+            };
+
+            var ticket = _loginQueueService.PushLogin(loginRequest);
+            if (string.IsNullOrWhiteSpace(ticket))
+                return Error(ErrorRes.Get("Ticket is empty"));
+            return Ok(new { result = true, date = DateTime.UtcNow });
+        }
+
+        /// <summary>
         /// Returns queue position for a given ticket
         /// </summary>
         [HttpGet]
         [Route("{ticket}")]
+        [JwtAuthorize]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
         public IActionResult GetTicketPosition(string ticket)
         {
+            var senderPubKey = HttpContext.PublicKey();
             var loginStatus = _loginQueueService.GetLoginStatus(ticket);
-            if (loginStatus != null) return Ok(loginStatus);
+            if (loginStatus != null)
+            {
+                //TODO: check if the player is banned
+                if (_playerStateService.isAlreadyConnected(senderPubKey))
+                {
+                    return Error(new LoginStatus()
+                    {
+                        State = "Account already connected",
+                        Position = -1,
+                        Total = -1
+                    });
+                }
+
+                int connectedPlayers = _playerStateService.GetConnectedCount();
+                if (connectedPlayers > _playerStateService.GetMaxPlayers())
+                {
+                    return Error(new LoginStatus()
+                    {
+                        State = "Too many connected",
+                        Position = -1,
+                        Total = -1
+                    });
+                }
+                if (loginStatus.State == "Logged")
+                {
+                    _playerStateService.UpdateAlivePlayer(senderPubKey);
+                }
+                return Ok(loginStatus);
+            }
             else return NotFound(ErrorRes.Get("No ticket found"));
         }
 

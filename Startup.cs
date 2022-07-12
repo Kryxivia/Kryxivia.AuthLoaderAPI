@@ -52,6 +52,7 @@ namespace Kryxivia.AuthLoaderAPI
             services.Configure<JwtSettings>(Configuration.GetSection("Jwt"));
             services.Configure<SwaggerSettings>(Configuration.GetSection("Swagger"));
             services.Configure<LoginQueueSettings>(Configuration.GetSection("LoginQueue"));
+            services.Configure<PlayerStateSettings>(Configuration.GetSection("PlayerState"));
 
             // Kryxivia MongoDB...
             services.AddKryxMongoDBWithRepositories(Configuration.GetConnectionString("KryxiviaDatabase"));
@@ -79,6 +80,8 @@ namespace Kryxivia.AuthLoaderAPI
             // Services...
             services.AddSingleton<LoginQueueService>();
             services.AddSingleton<TemporaryTokenService>();
+            services.AddSingleton<PlayerStateService>();
+
 
             // Health Checks...
             services.AddHealthChecks()
@@ -124,6 +127,7 @@ namespace Kryxivia.AuthLoaderAPI
                 app.UseDeveloperExceptionPage();
             }
 
+
             // Serilog...
             app.UseSerilogRequestLogging();
 
@@ -142,6 +146,9 @@ namespace Kryxivia.AuthLoaderAPI
             // Swagger...
             app.UseSwagger();
             app.UseSwaggerUI();
+
+            // Service initialization
+            app.ApplicationServices.GetService<PlayerStateService>();
 
             app.UseEndpoints(endpoints =>
             {
