@@ -9,7 +9,6 @@ namespace Kryxivia.AuthLoaderAPI.Settings
     {
         public int TTL { get; set; }
         public int MaxPlayersOnline { get; set; }
-
         public int SecondsTimeout { get; set; }
     }
 }
