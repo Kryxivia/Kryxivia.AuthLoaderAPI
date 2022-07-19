@@ -142,6 +142,22 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// 
         /// </summary>
         [HttpGet]
+        [Route("disconnect")]
+        [JwtAuthorize]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
+        public IActionResult PingDisconnected()
+        {
+            var senderPubKey = HttpContext.PublicKey();
+            _playerStateService.DisconnectPlayer(senderPubKey);
+            return Ok(new { result = true, date = DateTime.UtcNow });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [HttpGet]
         [Route("ping")]
         [JwtAuthorize]
         [Produces(MediaTypeNames.Application.Json)]
@@ -158,7 +174,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         /// 
         /// </summary>
         [HttpGet]
-        [Route("join_queue")]
+        [Route("join-queue")]
         [JwtAuthorize]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
@@ -177,7 +193,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var ticket = _loginQueueService.PushLogin(loginRequest);
             if (string.IsNullOrWhiteSpace(ticket))
                 return Error(ErrorRes.Get("Ticket is empty"));
-            return Ok(new { result = true, date = DateTime.UtcNow });
+            return Ok(new { ticket = ticket, date = DateTime.UtcNow });
         }
 
         /// <summary>
@@ -195,14 +211,14 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var loginStatus = _loginQueueService.GetLoginStatus(ticket);
             if (loginStatus != null)
             {
-                //TODO: check if the player is banned
                 if (_playerStateService.isAlreadyConnected(senderPubKey))
                 {
                     return Error(new LoginStatus()
                     {
-                        State = "Account already connected",
+                        State = "Account already connected!",
                         Position = -1,
-                        Total = -1
+                        Total = -1,
+                        Waiting = true
                     });
                 }
 
@@ -211,9 +227,10 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 {
                     return Error(new LoginStatus()
                     {
-                        State = "Too many connected",
+                        State = "Too many players connected!",
                         Position = -1,
-                        Total = -1
+                        Total = -1,
+                        Waiting = true
                     });
                 }
                 if (loginStatus.State == "Logged")

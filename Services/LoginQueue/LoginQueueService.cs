@@ -143,7 +143,8 @@ namespace Kryxivia.AuthLoaderAPI.Services.LoginQueue
                 {
                     State = position == -1 ? "Logged" : "Waiting",
                     Position = position,
-                    Total = _chainQueue.Count
+                    Total = _chainQueue.Count,
+                    Waiting = position == -1 ? false : true
                 };
             }
             catch (Exception ex)

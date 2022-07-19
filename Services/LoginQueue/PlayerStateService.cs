@@ -55,18 +55,29 @@ namespace Kryxivia.AuthLoaderAPI.Services.LoginQueue
             return alives.ToList();
         }
 
-        public void UpdateAlivePlayer(string PublicKey)
+        public void UpdateAlivePlayer(string publicKey)
         {
             lock (_mutex)
             {
-                var player = _players.Find(x => x.PublicKey == PublicKey);
+                var player = _players.Find(x => x.PublicKey == publicKey);
                 if (player == null) {
-                    _players.Add(new PlayerStateObject { Alive = true, LastPing = DateTime.UtcNow, PublicKey = PublicKey });
+                    _players.Add(new PlayerStateObject { Alive = true, LastPing = DateTime.UtcNow, PublicKey = publicKey });
                 }
                 else
                 {
                     player.LastPing = DateTime.UtcNow;
                 }
+            }
+        }
+
+        public void DisconnectPlayer(string publicKey)
+        {
+            if (!isAlreadyConnected(publicKey))
+                return;
+            lock (_mutex)
+            {
+                int index =  _players.FindIndex(x => x.PublicKey == publicKey);
+                _players.RemoveAt(index);
             }
         }
 
