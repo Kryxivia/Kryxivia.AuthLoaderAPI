@@ -55,12 +55,10 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             _accountRepository = accountRepository;
 
             _loginQueueService = loginQueueService;
-
             _temporaryTokenService = temporaryTokenService;
+            _playerStateService = playerStateService;
 
             _ethereumMessageSigner = new EthereumMessageSigner();
-
-            _playerStateService = playerStateService;
         }
 
         /// <summary>

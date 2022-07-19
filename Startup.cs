@@ -39,7 +39,6 @@ namespace Kryxivia.AuthLoaderAPI
             Configuration = configuration;
             WebHostEnvironment = webHostEnvironment;
         }
-
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -81,7 +80,6 @@ namespace Kryxivia.AuthLoaderAPI
             services.AddSingleton<LoginQueueService>();
             services.AddSingleton<TemporaryTokenService>();
             services.AddSingleton<PlayerStateService>();
-
 
             // Health Checks...
             services.AddHealthChecks()
@@ -127,7 +125,6 @@ namespace Kryxivia.AuthLoaderAPI
                 app.UseDeveloperExceptionPage();
             }
 
-
             // Serilog...
             app.UseSerilogRequestLogging();
 
@@ -146,9 +143,6 @@ namespace Kryxivia.AuthLoaderAPI
             // Swagger...
             app.UseSwagger();
             app.UseSwaggerUI();
-
-            // Service initialization
-            app.ApplicationServices.GetService<PlayerStateService>();
 
             app.UseEndpoints(endpoints =>
             {
