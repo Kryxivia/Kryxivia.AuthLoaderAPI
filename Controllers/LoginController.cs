@@ -194,6 +194,20 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             return Ok(new { ticket = ticket, date = DateTime.UtcNow });
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [HttpGet]
+        [Route("online-players")]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
+        public IActionResult OnlinePlayers()
+        {
+            return Ok(new { count = _playerStateService.CountAlivePlayers() });
+        }
+
         /// <summary>
         /// Returns queue position for a given ticket
         /// </summary>

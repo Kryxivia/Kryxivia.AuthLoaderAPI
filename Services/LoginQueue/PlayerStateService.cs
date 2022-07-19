@@ -106,6 +106,16 @@ namespace Kryxivia.AuthLoaderAPI.Services.LoginQueue
             return _playerStateSettings.MaxPlayersOnline;
         }
 
+        public int CountAlivePlayers()
+        {
+            int count = 0;
+            lock (_mutex)
+            {
+                count = _players.Count;
+            }
+            return count;
+        }
+
         private List<PlayerStateObject> GetAlivePlayers()
         {
             List<PlayerStateObject> alives = new List<PlayerStateObject>();

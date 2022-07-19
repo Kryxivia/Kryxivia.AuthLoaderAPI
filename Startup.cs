@@ -144,6 +144,9 @@ namespace Kryxivia.AuthLoaderAPI
             app.UseSwagger();
             app.UseSwaggerUI();
 
+            // Service initialization
+            app.ApplicationServices.GetService<PlayerStateService>();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHealthChecks("/health");
