@@ -22,7 +22,6 @@ using Kryxivia.AuthLoaderAPI.Services.TemporaryToken.Models;
 using Newtonsoft.Json;
 using Kryxivia.AuthLoaderAPI.Middlewares.Attributes;
 using Kryxivia.AuthLoaderAPI.Utilities;
-using Kryxivia.AuthLoaderAPI.Services.LoginQueue.Models;
 
 namespace Kryxivia.AuthLoaderAPI.Controllers
 {
@@ -188,9 +187,10 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginStatus))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
-        public IActionResult JoinQueue()
+        public async Task<IActionResult> JoinQueue()
         {
             var senderPubKey = HttpContext.PublicKey();
+
             // Requesting joining queue...
             var loginRequest = new LoginRequest()
             {
@@ -202,6 +202,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var ticket = _loginQueueService.PushLogin(loginRequest);
             if (string.IsNullOrWhiteSpace(ticket))
                 return Error(ErrorRes.Get("Ticket is empty"));
+
             return Ok(new { ticket = ticket, date = DateTime.UtcNow });
         }
 
