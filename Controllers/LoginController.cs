@@ -79,10 +79,12 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             if (_loginQueueService.IsInQueue(addressRec))
                 return Error(ErrorRes.Get("Already in queue"));
             /*
-                        var alphaAccessEntry = await _alphaAccessRepository.GetByPublicKey(req.PublicKey);
-                        if (alphaAccessEntry == null)
-                            return Error(ErrorRes.Get("No Alpha access found"));
+                var alphaAccessEntry = await _alphaAccessRepository.GetByPublicKey(req.PublicKey);
+                if (alphaAccessEntry == null)
+                    return Error(ErrorRes.Get("No Alpha access found"));
             */
+
+            /*
             var consumedAlphaRewards = await _alphaRewardRepository.GetByConsumer(req.PublicKey);
             if (consumedAlphaRewards.Count > 0)
             {
@@ -90,6 +92,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 if (result.Count == 0)
                     return Error(ErrorRes.Get("You need the NFT 'Kryxivia Alpha Book Access' to access the public alpha! Go claim it on https://app.kryxivia.io/public-alpha."));
             }
+            */
 
             // Creating an account if not existing...
             var account = await _accountRepository.GetByPublicKey(req.PublicKey);
