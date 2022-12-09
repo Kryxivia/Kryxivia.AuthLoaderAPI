@@ -10,6 +10,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers.Responses
         public bool Owner { get; set; }
         public bool Success { get; set; }
         public bool IsBanned { get; set; }
+        public bool IsAdmin { get; set; }
         public string BanPeriod { get; set; }
     }
 }

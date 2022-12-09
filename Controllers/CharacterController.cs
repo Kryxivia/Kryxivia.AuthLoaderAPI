@@ -221,7 +221,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 }
             }
 
-            return Ok(new IsOwnerOfResThenLogin() { Owner = isOwner, Success = success, IsBanned = isBanned, BanPeriod = banPeriod });
+            return Ok(new IsOwnerOfResThenLogin() { Owner = isOwner, Success = success, IsBanned = isBanned, BanPeriod = banPeriod, IsAdmin = account.IsAdmin });
         }
 
         #region Utilities
