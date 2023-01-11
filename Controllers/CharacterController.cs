@@ -112,10 +112,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var targetCharacter = await _characterRepository.GetActive(characterId);
             if (!string.IsNullOrWhiteSpace(targetCharacter?.IdAsString) && targetCharacter?.PublicKey == senderPubKey)
             {
-                targetCharacter.IsArchived = true;
-                targetCharacter.ArchivedAt = DateTime.Now;
-
-                if (await _characterRepository.Update(characterId, targetCharacter))
+                if (await _characterRepository.UpdatePropertyAsync(characterId, x => x.IsArchived, true) && await _characterRepository.UpdatePropertyAsync(characterId, x => x.ArchivedAt, DateTime.Now))
                 {
                     return Ok();
                 }
@@ -206,12 +203,12 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             if (character != null && character.PublicKey == senderPubKey)
             {
+                await CleanInventory(character, account);
                 isOwner = true;
 
                 if (!character.IsLogged)
                 {
-                    character.IsLogged = true;
-                    if (await _characterRepository.Update(character.IdAsString, character)) success = true;
+                    if (await _characterRepository.UpdatePropertyAsync(character.IdAsString, x => x.IsLogged, true)) success = true;
                 }
 
                 if (account.BanPeriod.HasValue && account.BanPeriod > DateTime.Now)
@@ -230,6 +227,25 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         {
             var characters = await _characterRepository.GetAllByName(name);
             return characters == null || characters?.Count == 0;
+        }
+
+        private async Task CleanInventory(Character character, Account account)
+        {
+            var distinctAndCleanedBank = account.Bank.Items.GroupBy(x => x.Position).Select(y => y.First()).Where(i => i.Position >= 0).ToList();
+
+            if (distinctAndCleanedBank.Count != account.Bank.Items.Count)
+            {
+                account.Bank.Items = distinctAndCleanedBank;
+                await _accountRepository.Update(account.PublicKey, account);
+            }
+
+            var distinctAndCleanedInventory = character.InventoryItems.GroupBy(x => x.Position).Select(y => y.First()).Where(i => i.Position >= 0 && i.Position <= 50).ToList();
+
+            if (distinctAndCleanedInventory.Count > 0 && distinctAndCleanedInventory.Count != character.InventoryItems.Count)
+            {
+                character.InventoryItems = distinctAndCleanedInventory;
+                await _characterRepository.UpdatePropertyAsync(character.IdAsString, x => x.InventoryItems, character.InventoryItems);
+            }
         }
 
         #endregion
