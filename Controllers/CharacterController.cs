@@ -203,6 +203,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             if (character != null && character.PublicKey == senderPubKey)
             {
+                await UpdateVersion(character);
                 await CleanInventory(character, account);
                 isOwner = true;
 
@@ -246,6 +247,11 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 character.InventoryItems = distinctAndCleanedInventory;
                 await _characterRepository.UpdatePropertyAsync(character.IdAsString, x => x.InventoryItems, character.InventoryItems);
             }
+        }
+
+        private async Task UpdateVersion(Character character)
+        {
+            await _characterRepository.UpdatePropertyAsync(character.IdAsString, x => x.QuestVersion, 0);
         }
 
         #endregion
