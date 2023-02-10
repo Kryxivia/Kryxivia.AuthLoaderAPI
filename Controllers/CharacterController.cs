@@ -62,7 +62,9 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 HairStyle = req.HairStyle,
                 SkinColor = req.SkinColor,
                 EyesColor = req.EyesColor,
-                Blendshapes = req.Blendshapes
+                Blendshapes = req.Blendshapes,
+                LastLobbyPosition = "631/25/754",
+                LastLobbyRotation = "0/160/0/0"
             };
 
             if (req.WelcomeStuff)
@@ -112,7 +114,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var targetCharacter = await _characterRepository.GetActive(characterId);
             if (!string.IsNullOrWhiteSpace(targetCharacter?.IdAsString) && targetCharacter?.PublicKey == senderPubKey)
             {
-                if (await _characterRepository.UpdatePropertyAsync(characterId, x => x.IsArchived, true) && await _characterRepository.UpdatePropertyAsync(characterId, x => x.ArchivedAt, DateTime.Now))
+                if (await _characterRepository.UpdatePropertyAsync(characterId, x => x.IsArchived, true) && await _characterRepository.UpdatePropertyAsync(characterId, x => x.ArchivedAt, DateTime.Now.ToString()))
                 {
                     return Ok();
                 }
@@ -141,9 +143,6 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             // Removing InventoryItems from json result
             characters.ForEach(x => x.InventoryItems = null);
-
-            // Removing Spells from json result
-            characters.ForEach(x => x.Spells = null);
 
             // Removing ServerIp and ServerPort from json result
             characters.ForEach(x => { x.ServerIp = null; x.ServerPort = -1; });
@@ -203,7 +202,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             if (character != null && character.PublicKey == senderPubKey)
             {
-                await CleanInventory(character, account);
+                //await CleanInventory(character, account);
                 isOwner = true;
 
                 if (!character.IsLogged)
@@ -227,25 +226,6 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         {
             var characters = await _characterRepository.GetAllByName(name);
             return characters == null || characters?.Count == 0;
-        }
-
-        private async Task CleanInventory(Character character, Account account)
-        {
-            var distinctAndCleanedBank = account.Bank.Items.GroupBy(x => x.Position).Select(y => y.First()).Where(i => i.Position >= 0).ToList();
-
-            if (distinctAndCleanedBank.Count != account.Bank.Items.Count)
-            {
-                account.Bank.Items = distinctAndCleanedBank;
-                await _accountRepository.Update(account.PublicKey, account);
-            }
-
-            var distinctAndCleanedInventory = character.InventoryItems.GroupBy(x => x.Position).Select(y => y.First()).Where(i => i.Position >= 0 && i.Position <= 50).ToList();
-
-            if (distinctAndCleanedInventory.Count > 0 && distinctAndCleanedInventory.Count != character.InventoryItems.Count)
-            {
-                character.InventoryItems = distinctAndCleanedInventory;
-                await _characterRepository.UpdatePropertyAsync(character.IdAsString, x => x.InventoryItems, character.InventoryItems);
-            }
         }
 
         #endregion
