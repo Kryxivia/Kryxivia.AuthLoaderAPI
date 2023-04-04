@@ -64,7 +64,8 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 EyesColor = req.EyesColor,
                 Blendshapes = req.Blendshapes,
                 LastLobbyPosition = "631/25/754",
-                LastLobbyRotation = "0/160/0/0"
+                LastLobbyRotation = "0/160/0/0",
+                MainFaction = new Faction() { FactionEnum = (Domain.MongoDB.Enums.FactionEnum)req.FactionId, Xp = 0 }
             };
 
             if (req.WelcomeStuff)

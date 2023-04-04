@@ -14,6 +14,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers.Requests
         public int HairStyle { get; set; }
         public int SkinColor { get; set; }
         public int EyesColor { get; set; }
+        public int FactionId { get; set; }
 
         public List<KeyValuePair<string, float>> Blendshapes { get; set; } = new List<KeyValuePair<string, float>>();
 
