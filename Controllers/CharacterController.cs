@@ -43,7 +43,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             var senderPubKey = HttpContext.PublicKey();
 
             var account = await _accountRepository.GetByPublicKey(senderPubKey);
-            if (account != null && !account.IsAdmin)
+            if (account != null && !account.AccountRights.CanUseGodMode)
             {
                 var characterCount = await _characterRepository.GetAllActiveByPublicKey(senderPubKey);
                 if (characterCount?.Count >= Constants.MAX_CHARACTER_PER_ACCOUNT)
@@ -218,7 +218,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 }
             }
 
-            return Ok(new IsOwnerOfResThenLogin() { Owner = isOwner, Success = success, IsBanned = isBanned, BanPeriod = banPeriod, IsAdmin = account.IsAdmin });
+            return Ok(new IsOwnerOfResThenLogin() { Owner = isOwner, Success = success, IsBanned = isBanned, BanPeriod = banPeriod, AccountRights = account.AccountRights });
         }
 
         #region Utilities
