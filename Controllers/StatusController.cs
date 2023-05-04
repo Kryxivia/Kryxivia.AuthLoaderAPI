@@ -43,8 +43,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             return Ok(new StatusRes() 
             {
-                IsOnline = targetCharacter.IsLogged,
-                Activity = targetCharacter.Activity
+                IsOnline = targetCharacter.IsLogged
             });
         }
     }
