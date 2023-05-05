@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Kryxivia.AuthLoaderAPI.Controllers.Requests;
 using Kryxivia.AuthLoaderAPI.Controllers.Responses;
 using Kryxivia.AuthLoaderAPI.Middlewares.Attributes;
+using Kryxivia.AuthLoaderAPI.Utilities;
 using Kryxivia.Domain.MongoDB.Models.Game;
 using Kryxivia.Domain.MongoDB.Repositories;
 using Microsoft.AspNetCore.Http;
@@ -18,15 +19,18 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
     [Route("api/v1/sessions")]
     public class CharacterSessionController : _ControllerBase
     {
+        private readonly AccountRepository _accountRepository;
         private readonly CharacterSessionRepository _characterSessionRepository;
 
-        public CharacterSessionController(CharacterSessionRepository characterSessionRepository)
+        public CharacterSessionController(AccountRepository accountRepository, CharacterSessionRepository characterSessionRepository)
         {
+            _accountRepository = accountRepository;
             _characterSessionRepository = characterSessionRepository;
         }
 
         /// <summary>
-        /// Retrieves a list of character sessions based on a list of character names and remove ServerIp and ServerPort
+        /// Retrieves a list of character sessions based on a list of character names
+        /// Remove ServerIp and ServerPort if have not CanSpectate rights
         /// </summary>
         /// <param name="req">The list of character names to search for.</param>
         /// <returns>A list of character sessions corresponding to the specified names.</returns>
@@ -37,6 +41,11 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorRes))]
         public async Task<IActionResult> GetCharacterSessionByNames([FromBody] GetSessionsReq req)
         {
+            var account = await _accountRepository.GetByPublicKey(HttpContext.PublicKey());
+
+            if (account == null)
+                return NotFound(ErrorRes.Get("No account found"));
+
             if (req.SessionToFind == null || req.SessionToFind.Count == 0)
                 return NotFound(ErrorRes.Get("No names found"));
 
@@ -45,7 +54,8 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             if (sessions == null || sessions.Count == 0)
                 return NotFound(ErrorRes.Get("No sessions found"));
 
-            sessions.ForEach(x => { x.ServerIp = null; x.ServerPort = -1; });
+            if (!account.AccountRights.CanSpectate)
+                sessions.ForEach(x => { x.ServerIp = null; x.ServerPort = -1; });
 
             GetSessionsRes sessionsRes = new GetSessionsRes();
             sessionsRes.CharactersSessions = sessions;
