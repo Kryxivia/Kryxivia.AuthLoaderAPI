@@ -52,7 +52,7 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
 
             var isNameAvailable = await IsNameAvailable(req.Name);
             if (!isNameAvailable) return Error(ErrorRes.Get("This character name is already used"));
-
+            if(!IsNameSizeRespected(req.Name)) return Error(ErrorRes.Get("This character name does not respect lengths"));
             var character = new Character()
             {
                 PublicKey = senderPubKey,
@@ -226,6 +226,12 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
             return characters == null || characters?.Count == 0;
         }
 
+        private bool IsNameSizeRespected(string name)
+        {            
+            return name.Length >= Constants.MIN_LENGTH_CHARACTER_NAME && name.Length <= Constants.MAX_LENGTH_CHARACTER_NAME;
+        }
+
+       
         #endregion
     }
 }
