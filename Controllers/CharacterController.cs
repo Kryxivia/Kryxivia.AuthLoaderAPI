@@ -58,10 +58,17 @@ namespace Kryxivia.AuthLoaderAPI.Controllers
                 PublicKey = senderPubKey,
                 Name = req.Name,
                 Gender = req.Gender,
+
+                // Old custom
                 HairColor = req.HairColor,
-                HairStyle = req.HairStyle,
                 SkinColor = req.SkinColor,
                 EyesColor = req.EyesColor,
+
+                // New Custom
+                HairStyle = req.HairStyle,
+                EyesColorType = req.EyesColorType,
+                HairColorType = req.HairColorType,
+                BodyColorType = req.BodyColorType,
                 Blendshapes = req.Blendshapes,
                 LastLobbyPosition = "631/25/754",
                 LastLobbyRotation = "0/160/0/0",
